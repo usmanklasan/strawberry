@@ -16,6 +16,7 @@
         fixUrlRewrite();
         fixElementGetter();
         fixCrossWindowLocalStorage();
+        installStrawberryDock();
 
         delete window.overrideGetProxyUrl;
         delete window.overrideParseProxyUrl;
@@ -177,6 +178,184 @@
             keyChanges = [];
             return updates;
         }
+    }
+
+    function installStrawberryDock() {
+        try {
+            if (window.top !== window.self) return;
+        } catch (e) {
+            return;
+        }
+        if (document.getElementById('strawberry-dock-host')) return;
+
+        const host = document.createElement('div');
+        host.id = 'strawberry-dock-host';
+        host.style.all = 'initial';
+        host.style.position = 'fixed';
+        host.style.left = '0';
+        host.style.right = '0';
+        host.style.bottom = '0';
+        host.style.zIndex = '2147483647';
+        host.style.pointerEvents = 'none';
+
+        const root = host.attachShadow ? host.attachShadow({ mode: 'open' }) : host;
+
+        const style = document.createElement('style');
+        style.textContent = `
+            :host { all: initial; }
+            .dock {
+                pointer-events: auto;
+                width: min(560px, calc(100vw - 28px));
+                margin: 0 auto 14px;
+                padding: 10px;
+                border-radius: 22px;
+                background: rgba(7, 9, 12, 0.78);
+                border: 1px solid rgba(255, 159, 46, 0.45);
+                box-shadow: 0 10px 40px rgba(0, 0, 0, 0.65), 0 0 28px rgba(255, 159, 46, 0.16);
+                display: grid;
+                grid-template-columns: repeat(6, 1fr);
+                gap: 10px;
+                backdrop-filter: blur(10px);
+                -webkit-backdrop-filter: blur(10px);
+                font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+            }
+            .btn {
+                height: 54px;
+                border-radius: 16px;
+                border: 1px solid rgba(255, 255, 255, 0.12);
+                background: rgba(10, 12, 18, 0.65);
+                color: rgba(255, 255, 255, 0.90);
+                display: grid;
+                place-items: center;
+                cursor: pointer;
+                user-select: none;
+                transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
+            }
+            .btn:hover {
+                transform: translateY(-1px);
+                border-color: rgba(255, 159, 46, 0.60);
+                box-shadow: 0 0 18px rgba(255, 159, 46, 0.18);
+            }
+            .ic { font-size: 20px; line-height: 1; }
+            .menu {
+                pointer-events: auto;
+                width: min(420px, calc(100vw - 28px));
+                margin: 0 auto 10px;
+                padding: 10px;
+                border-radius: 18px;
+                background: rgba(7, 9, 12, 0.86);
+                border: 1px solid rgba(255, 159, 46, 0.35);
+                box-shadow: 0 12px 46px rgba(0, 0, 0, 0.70);
+                font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+                color: rgba(255, 255, 255, 0.92);
+            }
+            .menu[hidden] { display: none; }
+            .menu a {
+                display: flex;
+                align-items: center;
+                justify-content: space-between;
+                gap: 12px;
+                padding: 10px 12px;
+                border-radius: 14px;
+                color: inherit;
+                text-decoration: none;
+                border: 1px solid rgba(255, 255, 255, 0.10);
+                background: rgba(10, 12, 18, 0.55);
+                margin: 8px 0;
+            }
+            .menu a:hover {
+                border-color: rgba(255, 159, 46, 0.55);
+                box-shadow: 0 0 18px rgba(255, 159, 46, 0.12);
+            }
+            .label { opacity: 0.92; font-size: 13px; }
+            .hint { opacity: 0.55; font-size: 12px; }
+            @media (max-width: 520px) { .dock { grid-template-columns: repeat(3, 1fr); } }
+        `;
+
+        const container = document.createElement('div');
+        const menu = document.createElement('div');
+        menu.className = 'menu';
+        menu.hidden = true;
+
+        const dock = document.createElement('div');
+        dock.className = 'dock';
+
+        function mkBtn(label, icon, onClick) {
+            const b = document.createElement('div');
+            b.className = 'btn';
+            b.setAttribute('role', 'button');
+            b.setAttribute('tabindex', '0');
+            b.setAttribute('aria-label', label);
+            b.innerHTML = `<span class="ic" aria-hidden="true">${icon}</span>`;
+            b.addEventListener('click', onClick);
+            b.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    onClick();
+                }
+            });
+            return b;
+        }
+
+        function goHome() {
+            try {
+                window.location.href = window.location.origin + '/';
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        function toggleMenu() {
+            menu.hidden = !menu.hidden;
+        }
+
+        dock.appendChild(mkBtn('Home', '⌂', goHome));
+        dock.appendChild(mkBtn('Back', '←', () => history.back()));
+        dock.appendChild(mkBtn('Forward', '→', () => history.forward()));
+        dock.appendChild(mkBtn('Reload', '⟳', () => location.reload()));
+        dock.appendChild(mkBtn('Top', '⇧', () => window.scrollTo({ top: 0, behavior: 'smooth' })));
+        dock.appendChild(mkBtn('Menu', '☰', toggleMenu));
+
+        function mkLink(text, hint, href, onClick) {
+            const a = document.createElement('a');
+            a.href = href || '#';
+            a.innerHTML = `<span class="label">${text}</span><span class="hint">${hint || ''}</span>`;
+            if (onClick) {
+                a.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    onClick();
+                    menu.hidden = true;
+                });
+            } else {
+                a.addEventListener('click', () => (menu.hidden = true));
+            }
+            return a;
+        }
+
+        menu.appendChild(mkLink('Home', 'Strawberry', '#', goHome));
+        menu.appendChild(
+            mkLink('New tab', 'Open Strawberry', '#', () => window.open(window.location.origin + '/', '_blank'))
+        );
+        menu.appendChild(mkLink('Close menu', '', '#', () => (menu.hidden = true)));
+
+        container.appendChild(menu);
+        container.appendChild(dock);
+
+        root.appendChild(style);
+        root.appendChild(container);
+        document.documentElement.appendChild(host);
+
+        // Close menu when clicking outside
+        document.addEventListener(
+            'click',
+            (e) => {
+                if (menu.hidden) return;
+                const path = e.composedPath ? e.composedPath() : [];
+                if (path.includes(host)) return;
+                menu.hidden = true;
+            },
+            true
+        );
     }
 
     var noShuffling = false;

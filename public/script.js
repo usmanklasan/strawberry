@@ -62,9 +62,11 @@
     function setError(err) {
         var element = document.getElementById('error-text');
         if (err) {
+            if (!element) return;
             element.style.display = 'block';
             element.textContent = 'An error occurred: ' + err;
         } else {
+            if (!element) return;
             element.style.display = 'none';
             element.textContent = '';
         }
@@ -95,6 +97,12 @@
             if (request.status === 200) {
                 callback(request.responseText);
             } else {
+                if (request.responseText === 'bad password') {
+                    var wrapper = document.getElementById('password-wrapper');
+                    if (wrapper) wrapper.style.display = '';
+                    if (!shush) setError('Bad password. Please try again.');
+                    return;
+                }
                 if (!shush)
                     setError(
                         'unexpected server response to not match "200". Server says "' + request.responseText + '"'
@@ -268,14 +276,100 @@
 
     api.needpassword(doNeed => {
         if (doNeed) {
-            document.getElementById('password-wrapper').style.display = '';
+            var wrapper = document.getElementById('password-wrapper');
+            if (wrapper) wrapper.style.display = '';
         }
     });
+
+    function ensureDefaultSession(cb) {
+        try {
+            var existing = document.getElementById('session-id');
+            if (existing && existing.value) return cb(existing.value);
+        } catch (e) {
+            // ignore
+        }
+
+        var defaultSession = null;
+        try {
+            defaultSession = sessionIdsStore.getDefault();
+        } catch (e) {
+            defaultSession = null;
+        }
+        if (defaultSession && defaultSession.id) {
+            var idEl = document.getElementById('session-id');
+            if (idEl) idEl.value = defaultSession.id;
+            return cb(defaultSession.id);
+        }
+
+        api.newsession(function (id) {
+            try {
+                addSession(id);
+                sessionIdsStore.setDefault(id);
+            } catch (e) {
+                // ignore
+            }
+            var idEl = document.getElementById('session-id');
+            if (idEl) idEl.value = id;
+            cb(id);
+        });
+    }
+
     window.addEventListener('load', function () {
-        loadSessions();
+        // Make the homepage logo look like a cutout by removing near-white pixels.
+        (function tryTransparentLogoBackground() {
+            try {
+                var img = document.querySelector('.cheesy-logo');
+                if (!img) return;
+                if (img.dataset && img.dataset.cleaned === '1') return;
+
+                function process() {
+                    try {
+                        var canvas = document.createElement('canvas');
+                        var w = img.naturalWidth || img.width || 0;
+                        var h = img.naturalHeight || img.height || 0;
+                        if (!w || !h) return;
+                        canvas.width = w;
+                        canvas.height = h;
+                        var ctx = canvas.getContext('2d');
+                        if (!ctx) return;
+                        ctx.drawImage(img, 0, 0);
+                        var imageData = ctx.getImageData(0, 0, w, h);
+                        var d = imageData.data;
+                        for (var i = 0; i < d.length; i += 4) {
+                            var r = d[i];
+                            var g = d[i + 1];
+                            var b = d[i + 2];
+                            // If pixel is close to white, make it transparent (soft threshold).
+                            if (r > 245 && g > 245 && b > 245) {
+                                d[i + 3] = 0;
+                            }
+                        }
+                        ctx.putImageData(imageData, 0, 0);
+                        img.src = canvas.toDataURL('image/png');
+                        if (img.dataset) img.dataset.cleaned = '1';
+                    } catch (e) {
+                        // ignore
+                    }
+                }
+
+                if (img.complete && img.naturalWidth) process();
+                else img.addEventListener('load', process, { once: true });
+            } catch (e) {
+                // ignore
+            }
+        })();
+
+        try {
+            loadSessions();
+        } catch (e) {
+            // ok if sessions table isn't visible
+        }
+        ensureDefaultSession(function () {});
 
         var showingAdvancedOptions = false;
-        document.getElementById('session-advanced-toggle').onclick = function () {
+        var advancedToggle = document.getElementById('session-advanced-toggle');
+        if (advancedToggle)
+            advancedToggle.onclick = function () {
             // eslint-disable-next-line no-cond-assign
             document.getElementById('session-advanced-container').style.display = (showingAdvancedOptions =
                 !showingAdvancedOptions)
@@ -283,39 +377,89 @@
                 : 'none';
         };
 
-        document.getElementById('session-create-btn').onclick = function () {
+        var createBtn = document.getElementById('session-create-btn');
+        if (createBtn)
+            createBtn.onclick = function () {
             setError();
             api.newsession(function (id) {
                 addSession(id);
                 document.getElementById('session-id').value = id;
                 document.getElementById('session-httpproxy').value = '';
+                try {
+                    sessionIdsStore.setDefault(id);
+                } catch (e) {
+                    // ignore
+                }
             });
         };
         function go() {
             setError();
-            var id = document.getElementById('session-id').value;
-            var httpproxy = document.getElementById('session-httpproxy').value;
-            var enableShuffling = document.getElementById('session-shuffling').checked;
-            var url = document.getElementById('session-url').value || 'https://www.google.com/';
-            if (!id) return setError('must generate a session id first');
-            api.sessionexists(id, function (value) {
-                if (!value) return setError('session does not exist. try deleting or generating a new session');
-                api.editsession(id, httpproxy, enableShuffling, function () {
-                    editSession(id, httpproxy, enableShuffling);
-                    api.shuffleDict(id, function (shuffleDict) {
-                        if (!shuffleDict) {
-                            window.location.href = '/' + id + '/' + url;
-                        } else {
-                            var shuffler = new StrShuffler(shuffleDict);
-                            window.location.href = '/' + id + '/' + shuffler.shuffle(url);
+            ensureDefaultSession(function (id) {
+                var httpproxyEl = document.getElementById('session-httpproxy');
+                var shufflingEl = document.getElementById('session-shuffling');
+                var urlEl = document.getElementById('session-url');
+
+                var httpproxy = httpproxyEl ? httpproxyEl.value : '';
+                var enableShuffling = shufflingEl ? shufflingEl.checked : true;
+                var rawInput = (urlEl && urlEl.value) ? urlEl.value : '';
+                rawInput = String(rawInput).trim();
+
+                function normalizeInputToUrl(input) {
+                    if (!input) return 'https://duckduckgo.com/';
+
+                    // Already a URL with scheme
+                    if (/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//.test(input)) return input;
+
+                    // Common domain patterns (no scheme)
+                    if (/^([a-zA-Z0-9-]+\.)+[a-zA-Z]{2,}(\/|$)/.test(input)) return 'https://' + input;
+
+                    // Otherwise treat as search query
+                    return 'https://duckduckgo.com/?q=' + encodeURIComponent(input) + '&ia=web';
+                }
+
+                var url = normalizeInputToUrl(rawInput);
+                // Avoid breaking the proxy route with spaces/unescaped characters.
+                url = encodeURI(url);
+
+                api.sessionexists(id, function (value) {
+                    if (!value) {
+                        // session got deleted server-side; recreate
+                        return api.newsession(function (newId) {
+                            try {
+                                addSession(newId);
+                                sessionIdsStore.setDefault(newId);
+                            } catch (e) {
+                                // ignore
+                            }
+                            var idEl = document.getElementById('session-id');
+                            if (idEl) idEl.value = newId;
+                            go();
+                        });
+                    }
+                    api.editsession(id, httpproxy, enableShuffling, function () {
+                        try {
+                            editSession(id, httpproxy, enableShuffling);
+                        } catch (e) {
+                            // ignore if not in table
                         }
+                        api.shuffleDict(id, function (shuffleDict) {
+                            if (!shuffleDict) {
+                                window.location.href = '/' + id + '/' + url;
+                            } else {
+                                var shuffler = new StrShuffler(shuffleDict);
+                                window.location.href = '/' + id + '/' + shuffler.shuffle(url);
+                            }
+                        });
                     });
                 });
             });
         }
-        document.getElementById('session-go').onclick = go;
-        document.getElementById('session-url').onkeydown = function (event) {
-            if (event.key === 'Enter') go();
-        };
+        var goBtn = document.getElementById('session-go');
+        if (goBtn) goBtn.onclick = go;
+        var urlBox = document.getElementById('session-url');
+        if (urlBox)
+            urlBox.onkeydown = function (event) {
+                if (event.key === 'Enter') go();
+            };
     });
 })();
