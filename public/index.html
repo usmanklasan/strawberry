@@ -1,106 +1,124 @@
 <!DOCTYPE html>
-
-<html>
+<html lang="en">
 
 <head>
     <link rel="icon" type="image/png" href="/favicon.png" />
     <link rel="stylesheet" href="style.css">
-    <script src="script.js"></script>
+    <script src="script.js" defer></script>
 
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#0b1020" />
+    <meta name="theme-color" content="#0a0a12" />
 
     <title>Strawberry</title>
 </head>
 
 <body>
-    <main class="cheesy-shell" aria-label="Strawberry home">
-        <div class="cheesy-center">
-            <div class="cheesy-logo-wrap">
-                <img class="cheesy-logo" src="logo.png" alt="Strawberry" />
-            </div>
-            <h1 class="cheesy-title">Strawberry</h1>
-            <p class="cheesy-subtitle">Welcome to Strawberry! Experience a fast, secure, and reliable proxy.</p>
-            <p class="cheesy-subtitle muted">Enter a URL to start browsing.</p>
-
-            <p class="alert alert-danger cheesy-error" id="error-text" style="display: none">Error: some text</p>
-
-            <div class="cheesy-search">
-                <input type="text" class="cheesy-input" id="session-url" placeholder="Enter URL or search..." autocomplete="off" />
-                <button class="cheesy-go" id="session-go" aria-label="Go">
-                    <span aria-hidden="true">→</span>
-                </button>
+    <div id="lunar-app" class="lunar-app">
+        <header class="lunar-chrome">
+            <div class="lunar-brand">
+                <img class="lunar-brand-icon" src="logo.png" alt="" width="28" height="28" />
+                <span class="lunar-brand-text">Strawberry</span>
+                <span class="lunar-ver">v2</span>
             </div>
 
-            <div class="cheesy-password" id="password-wrapper" style="display: none" aria-label="Password required">
-                <input type="password" class="cheesy-input" id="session-password" placeholder="Enter password..." autocomplete="current-password" />
+            <div class="lunar-urlbar-wrap">
+                <div class="lunar-urlbar">
+                    <span class="lunar-scheme" id="lunar-scheme">strawberry://</span>
+                    <span class="lunar-path-hint" id="lunar-path-hint" aria-hidden="true">new</span>
+                    <input type="text" class="lunar-url-input" id="session-url" placeholder="Search or enter URL..."
+                        spellcheck="false" autocomplete="off" aria-label="Address" />
+                    <button type="button" class="lunar-go" id="session-go" title="Go">→</button>
+                </div>
             </div>
 
-            <div class="cheesy-copyright">©2026 Strawberry</div>
+            <button type="button" class="lunar-menu-toggle" id="lunar-sidebar-toggle" aria-label="Menu" aria-expanded="false">☰</button>
+        </header>
+
+        <p class="alert alert-danger lunar-error" id="error-text" style="display: none" role="alert"></p>
+
+        <div class="lunar-password" id="password-wrapper" style="display: none">
+            <input type="password" class="lunar-password-input" id="session-password" placeholder="Session password..."
+                autocomplete="current-password" />
         </div>
 
-        <nav class="cheesy-dock" aria-label="Quick actions">
-            <a class="dock-btn" href="#" aria-label="Home">
-                <span class="dock-ic" aria-hidden="true">⌂</span>
-            </a>
-            <a class="dock-btn" href="#" aria-label="Sessions">
-                <span class="dock-ic" aria-hidden="true">⧉</span>
-            </a>
-            <a class="dock-btn" href="#" aria-label="Games">
-                <span class="dock-ic" aria-hidden="true">⌁</span>
-            </a>
-            <a class="dock-btn" href="#" aria-label="Tools">
-                <span class="dock-ic" aria-hidden="true">🛠</span>
-            </a>
-            <a class="dock-btn" href="#" aria-label="Settings">
-                <span class="dock-ic" aria-hidden="true">⚙</span>
-            </a>
-            <a class="dock-btn" href="#" aria-label="Legal">
-                <span class="dock-ic" aria-hidden="true">⚖</span>
-            </a>
-        </nav>
+        <main class="lunar-main">
+            <section id="lunar-home" class="lunar-home" aria-label="New tab">
+                <div class="lunar-clock-wrap">
+                    <div class="lunar-clock" id="lunar-clock">--:--:--</div>
+                    <div class="lunar-tagline">Strawberry</div>
+                </div>
 
-        <!-- Hidden legacy controls kept for compatibility (script.js expects these IDs). -->
-        <section class="legacy" aria-hidden="true">
+                <nav class="lunar-shortcuts" aria-label="Shortcuts">
+                    <button type="button" class="lunar-shortcut" data-quick-url="https://www.youtube.com/" title="YouTube">
+                        <span class="lunar-sic">▶</span><span class="lunar-slabel">YouTube</span>
+                    </button>
+                    <button type="button" class="lunar-shortcut" data-quick-url="https://x.com/" title="X">
+                        <span class="lunar-sic">𝕏</span><span class="lunar-slabel">X</span>
+                    </button>
+                    <button type="button" class="lunar-shortcut" data-quick-url="https://github.com/" title="GitHub">
+                        <span class="lunar-sic">⌘</span><span class="lunar-slabel">GitHub</span>
+                    </button>
+                    <button type="button" class="lunar-shortcut" data-quick-url="https://www.google.com/" title="Google">
+                        <span class="lunar-sic">G</span><span class="lunar-slabel">Google</span>
+                    </button>
+                    <button type="button" class="lunar-shortcut" data-quick-url="https://www.wikipedia.org/" title="Wikipedia">
+                        <span class="lunar-sic">W</span><span class="lunar-slabel">Wikipedia</span>
+                    </button>
+                    <button type="button" class="lunar-shortcut" data-quick-url="https://duckduckgo.com/" title="DuckDuckGo">
+                        <span class="lunar-sic">🦆</span><span class="lunar-slabel">DuckDuckGo</span>
+                    </button>
+                </nav>
+            </section>
+
+            <iframe id="proxy-frame" class="lunar-frame" name="strawberry-proxy" title="Browsing" sandbox="allow-scripts allow-forms allow-popups allow-modals allow-same-origin allow-pointer-lock allow-downloads"></iframe>
+        </main>
+
+        <aside class="lunar-sidebar" id="lunar-sidebar" aria-label="Tools">
+            <div class="lunar-side-inner">
+                <h2 class="lunar-side-title">Menu</h2>
+                <button type="button" class="lunar-side-btn" id="lunar-action-newtab"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd><span>New tab</span></button>
+                <button type="button" class="lunar-side-btn" id="lunar-action-fullscreen"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd><span>Full screen</span></button>
+                <button type="button" class="lunar-side-btn" id="lunar-action-reload"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd><span>Reload frame</span></button>
+                <button type="button" class="lunar-side-btn" id="lunar-action-dark"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>X</kbd><span>Dark mode</span></button>
+                <button type="button" class="lunar-side-btn" id="lunar-action-cloak" aria-pressed="true"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd><span>AB Cloak (iframe)</span></button>
+                <button type="button" class="lunar-side-btn" id="lunar-action-home"><span>Home / clear</span></button>
+            </div>
+        </aside>
+
+        <footer class="lunar-footer">
+            <span class="lunar-footer-left" id="lunar-ping">Ready</span>
+            <span class="lunar-footer-right">v2.0.0 · Strawberry</span>
+        </footer>
+    </div>
+
+    <!-- Legacy IDs for script.js -->
+    <section class="legacy" aria-hidden="true">
+        <div class="input-group mb-3">
+            <div class="input-group-prepend"><span class="input-group-text">Session ID</span></div>
+            <input readonly type="text" class="form-control disable-text" id="session-id" placeholder="Session ID">
+            <div class="input-group-append">
+                <button class="btn btn-secondary" id="session-create-btn" type="button">Create new session ID</button>
+            </div>
+        </div>
+        <button class="btn btn-outline-secondary" id="session-advanced-toggle">Advanced options</button>
+        <div class="mt-2 mb-4" id="session-advanced-container" style="display: none">
+            <div class="form-check mb-1">
+                <input class="form-check-input" type="checkbox" value="" id="session-shuffling" checked>
+                <label class="form-check-label" for="session-shuffling">Enable URL shuffling</label>
+            </div>
             <div class="input-group mb-3">
-                <div class="input-group-prepend">
-                    <span class="input-group-text">Session ID</span>
-                </div>
-                <input readonly type="text" class="form-control disable-text" id="session-id" placeholder="Session ID">
-                <div class="input-group-append">
-                    <button class="btn btn-secondary" id="session-create-btn" type="button">Create new session ID</button>
-                </div>
+                <div class="input-group-prepend"><span class="input-group-text">HTTP Proxy</span></div>
+                <input type="text" class="form-control" id="session-httpproxy" placeholder="http://...">
             </div>
-
-            <button class="btn btn-outline-secondary" id="session-advanced-toggle">Advanced options</button>
-            <div class="mt-2 mb-4" id="session-advanced-container" style="display: none">
-                <div class="form-check mb-1">
-                    <input class="form-check-input" type="checkbox" value="" id="session-shuffling" checked>
-                    <label class="form-check-label" for="session-shuffling">Enable URL shuffling</label>
-                </div>
-                <div class="input-group mb-3">
-                    <div class="input-group-prepend">
-                        <span class="input-group-text">HTTP Proxy</span>
-                    </div>
-                    <input type="text" class="form-control" id="session-httpproxy" placeholder="http://...">
-                </div>
-            </div>
-
-            <div class="row justify-content-center m-0">
-                <table class="table w-75 table-striped table-bordered">
-                    <thead>
-                        <tr>
-                            <th>Session ID</th>
-                            <th>Created on</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                    </tbody>
-                </table>
-            </div>
-        </section>
-    </main>
+        </div>
+        <table class="table w-75 table-striped table-bordered">
+            <thead>
+                <tr><th>Session ID</th><th>Created on</th></tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </section>
 </body>
 
 </html>

@@ -267,6 +267,81 @@
         throw new TypeError('cannot find ' + id);
     }
 
+    var CLOAK_KEY = 'strawberry_ab_cloak';
+
+    function useIframeCloak() {
+        return localStorage.getItem(CLOAK_KEY) !== '0';
+    }
+
+    function setPathHint(text) {
+        var hint = document.getElementById('lunar-path-hint');
+        if (hint) hint.textContent = text;
+    }
+
+    function navigateProxy(id, pathSuffix) {
+        var dest = '/' + id + '/' + pathSuffix;
+        var frame = document.getElementById('proxy-frame');
+        var home = document.getElementById('lunar-home');
+        if (useIframeCloak() && frame) {
+            if (home) home.classList.add('is-hidden');
+            frame.classList.add('is-visible');
+            var t0 = performance.now();
+            frame.onload = function () {
+                var ping = document.getElementById('lunar-ping');
+                if (ping) ping.textContent = 'Frame: ' + Math.round(performance.now() - t0) + 'ms';
+            };
+            frame.src = dest;
+            setPathHint('browse');
+        } else {
+            window.location.href = dest;
+        }
+    }
+
+    function lunarNewTab() {
+        var frame = document.getElementById('proxy-frame');
+        var home = document.getElementById('lunar-home');
+        if (frame) {
+            frame.src = 'about:blank';
+            frame.classList.remove('is-visible');
+        }
+        if (home) home.classList.remove('is-hidden');
+        setPathHint('new');
+        var input = document.getElementById('session-url');
+        if (input) input.value = '';
+        setError();
+        var ping = document.getElementById('lunar-ping');
+        if (ping) ping.textContent = 'Ready';
+    }
+
+    function lunarReloadFrame() {
+        var frame = document.getElementById('proxy-frame');
+        if (!frame || !frame.classList.contains('is-visible')) return;
+        try {
+            if (frame.contentWindow && frame.contentWindow.location && frame.contentWindow.location.href !== 'about:blank') {
+                frame.contentWindow.location.reload();
+                return;
+            }
+        } catch (e) {
+            // ignore
+        }
+        var src = frame.src;
+        if (src) frame.src = src;
+    }
+
+    function lunarToggleSidebar(open) {
+        var side = document.getElementById('lunar-sidebar');
+        var btn = document.getElementById('lunar-sidebar-toggle');
+        if (!side) return;
+        var isOpen = typeof open === 'boolean' ? open : !side.classList.contains('is-open');
+        side.classList.toggle('is-open', isOpen);
+        if (btn) btn.setAttribute('aria-expanded', isOpen ? 'true' : 'false');
+    }
+
+    function lunarSyncCloakButton() {
+        var btn = document.getElementById('lunar-action-cloak');
+        if (btn) btn.setAttribute('aria-pressed', useIframeCloak() ? 'true' : 'false');
+    }
+
     get('/mainport', function (data) {
         var defaultPort = window.location.protocol === 'https:' ? 443 : 80;
         var currentPort = window.location.port || defaultPort;
@@ -318,7 +393,7 @@
         // Make the homepage logo look like a cutout by removing near-white pixels.
         (function tryTransparentLogoBackground() {
             try {
-                var img = document.querySelector('.cheesy-logo');
+                var img = document.querySelector('.lunar-brand-icon');
                 if (!img) return;
                 if (img.dataset && img.dataset.cleaned === '1') return;
 
@@ -444,10 +519,10 @@
                         }
                         api.shuffleDict(id, function (shuffleDict) {
                             if (!shuffleDict) {
-                                window.location.href = '/' + id + '/' + url;
+                                navigateProxy(id, url);
                             } else {
                                 var shuffler = new StrShuffler(shuffleDict);
-                                window.location.href = '/' + id + '/' + shuffler.shuffle(url);
+                                navigateProxy(id, shuffler.shuffle(url));
                             }
                         });
                     });
@@ -461,5 +536,97 @@
             urlBox.onkeydown = function (event) {
                 if (event.key === 'Enter') go();
             };
+
+        (function lunarClock() {
+            function tick() {
+                var el = document.getElementById('lunar-clock');
+                if (!el) return;
+                el.textContent = new Date().toLocaleTimeString(undefined, {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    second: '2-digit',
+                    hour12: true
+                });
+            }
+            tick();
+            setInterval(tick, 1000);
+        })();
+
+        document.querySelectorAll('.lunar-shortcut').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var u = btn.getAttribute('data-quick-url');
+                var input = document.getElementById('session-url');
+                if (input && u) input.value = u;
+                go();
+            });
+        });
+
+        var sideToggle = document.getElementById('lunar-sidebar-toggle');
+        if (sideToggle)
+            sideToggle.addEventListener('click', function () {
+                lunarToggleSidebar();
+            });
+
+        var btnNew = document.getElementById('lunar-action-newtab');
+        if (btnNew) btnNew.addEventListener('click', lunarNewTab);
+        var btnFs = document.getElementById('lunar-action-fullscreen');
+        if (btnFs)
+            btnFs.addEventListener('click', function () {
+                var app = document.getElementById('lunar-app');
+                if (!document.fullscreenElement && app && app.requestFullscreen) app.requestFullscreen();
+                else if (document.exitFullscreen) document.exitFullscreen();
+            });
+        var btnRel = document.getElementById('lunar-action-reload');
+        if (btnRel) btnRel.addEventListener('click', lunarReloadFrame);
+        var btnDark = document.getElementById('lunar-action-dark');
+        if (btnDark)
+            btnDark.addEventListener('click', function () {
+                document.body.classList.toggle('lunar-light');
+            });
+        var btnCloak = document.getElementById('lunar-action-cloak');
+        if (btnCloak) {
+            lunarSyncCloakButton();
+            btnCloak.addEventListener('click', function () {
+                var on = !useIframeCloak();
+                localStorage.setItem(CLOAK_KEY, on ? '1' : '0');
+                lunarSyncCloakButton();
+            });
+        }
+        var btnHome = document.getElementById('lunar-action-home');
+        if (btnHome) btnHome.addEventListener('click', lunarNewTab);
+
+        document.addEventListener('keydown', function (e) {
+            if (e.key === 'Escape') lunarToggleSidebar(false);
+            if (!e.ctrlKey || !e.altKey) return;
+            var k = e.key.toLowerCase();
+            if (k === 'n') {
+                e.preventDefault();
+                lunarNewTab();
+            } else if (k === 'r') {
+                e.preventDefault();
+                lunarReloadFrame();
+            } else if (k === 'z') {
+                e.preventDefault();
+                var app = document.getElementById('lunar-app');
+                if (!document.fullscreenElement && app && app.requestFullscreen) app.requestFullscreen();
+                else if (document.exitFullscreen) document.exitFullscreen();
+            } else if (k === 'x') {
+                e.preventDefault();
+                document.body.classList.toggle('lunar-light');
+            } else if (k === 'c') {
+                e.preventDefault();
+                var on = !useIframeCloak();
+                localStorage.setItem(CLOAK_KEY, on ? '1' : '0');
+                lunarSyncCloakButton();
+            }
+        });
+
+        document.addEventListener('click', function (e) {
+            var side = document.getElementById('lunar-sidebar');
+            var toggle = document.getElementById('lunar-sidebar-toggle');
+            if (!side || !side.classList.contains('is-open')) return;
+            if (side.contains(e.target) || (toggle && toggle.contains(e.target))) return;
+            lunarToggleSidebar(false);
+        });
     });
 })();
