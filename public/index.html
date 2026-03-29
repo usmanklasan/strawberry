@@ -14,10 +14,25 @@
 </head>
 
 <body>
+    <div id="strawberry-adblock-wall" class="strawberry-adblock-wall" hidden>
+        <div class="strawberry-adblock-dialog" role="dialog" aria-modal="true" aria-labelledby="strawberry-adblock-title">
+            <h2 id="strawberry-adblock-title" class="strawberry-adblock-title">Ad blocker detected</h2>
+            <p class="strawberry-adblock-text">This site is supported by advertising. Please allow ads for this domain to continue.</p>
+            <p class="strawberry-adblock-hint">In your blocker, choose <strong>Disable on this site</strong> or <strong>Trusted site</strong> for
+                <strong class="strawberry-adblock-host"></strong>
+            </p>
+            <button type="button" class="strawberry-adblock-retry" id="strawberry-adblock-retry">I&rsquo;ve allowed ads &mdash; reload</button>
+            <p class="strawberry-adblock-escape">
+                False positive?
+                <button type="button" class="strawberry-adblock-linkish" id="strawberry-adblock-bypass">Continue without ads (this device only)</button>
+            </p>
+        </div>
+    </div>
+
     <div id="lunar-app" class="lunar-app">
         <header class="lunar-chrome">
             <div class="lunar-brand">
-                <img class="lunar-brand-icon" src="logo.png" alt="" width="28" height="28" />
+                <img class="lunar-brand-icon" src="/logo.png" alt="" width="28" height="28" />
                 <span class="lunar-brand-text">Strawberry</span>
                 <span class="lunar-ver">v2</span>
             </div>
@@ -28,11 +43,15 @@
                     <span class="lunar-path-hint" id="lunar-path-hint" aria-hidden="true">new</span>
                     <input type="text" class="lunar-url-input" id="session-url" placeholder="Search or enter URL..."
                         spellcheck="false" autocomplete="off" aria-label="Address" />
-                    <button type="button" class="lunar-go" id="session-go" title="Go">→</button>
+                    <button type="button" class="lunar-go" id="session-go" title="Go" aria-label="Go">
+                        <svg class="lunar-icon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M8.59 16.59L13.17 12 8.59 7.41 10 6l6 6-6 6-1.41-1.41z"/></svg>
+                    </button>
                 </div>
             </div>
 
-            <button type="button" class="lunar-menu-toggle" id="lunar-sidebar-toggle" aria-label="Menu" aria-expanded="false">☰</button>
+            <button type="button" class="lunar-menu-toggle" id="lunar-sidebar-toggle" aria-label="Menu" aria-expanded="false">
+                <svg class="lunar-icon" width="22" height="22" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+            </button>
         </header>
 
         <p class="alert alert-danger lunar-error" id="error-text" style="display: none" role="alert"></p>

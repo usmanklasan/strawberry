@@ -601,7 +601,101 @@
         });
     }
 
+    function shouldSkipAdblockGate() {
+        try {
+            if (/[?&]noadblock=1(?:&|$)/.test(location.search)) {
+                sessionStorage.setItem('strawberry_adblock_bypass', '1');
+                try {
+                    var u = new URL(location.href);
+                    u.searchParams.delete('noadblock');
+                    history.replaceState(null, '', u.pathname + u.search + u.hash);
+                } catch (e) {
+                    /* ignore */
+                }
+                return true;
+            }
+            if (sessionStorage.getItem('strawberry_adblock_bypass') === '1') return true;
+        } catch (e) {
+            /* ignore */
+        }
+        return false;
+    }
+
+    function cosmeticAdblockProbe() {
+        var d = document.createElement('div');
+        d.className = 'adsbox strawberry-ad-probe';
+        d.setAttribute('aria-hidden', 'true');
+        d.style.cssText = 'position:absolute;left:-9999px;width:100px;height:20px;';
+        document.body.appendChild(d);
+        var blocked = false;
+        try {
+            var st = window.getComputedStyle(d);
+            if (st.display === 'none' || st.visibility === 'hidden') blocked = true;
+            else if (d.offsetHeight < 1) blocked = true;
+        } catch (e) {
+            /* ignore */
+        }
+        d.remove();
+        return blocked;
+    }
+
+    function scriptBaitProbe(cb) {
+        var s = document.createElement('script');
+        var done = false;
+        var to = setTimeout(function () {
+            if (done) return;
+            done = true;
+            cb(true);
+        }, 2200);
+        s.onload = function () {
+            if (done) return;
+            done = true;
+            clearTimeout(to);
+            cb(false);
+        };
+        s.onerror = function () {
+            if (done) return;
+            done = true;
+            clearTimeout(to);
+            cb(true);
+        };
+        s.src = '/show_ads.js?t=' + encodeURIComponent(String(Date.now()));
+        document.head.appendChild(s);
+    }
+
+    function detectAdblock(cb) {
+        if (cosmeticAdblockProbe()) {
+            cb(true);
+            return;
+        }
+        scriptBaitProbe(function (blocked) {
+            cb(!!blocked);
+        });
+    }
+
+    function wireAdblockWall() {
+        var host = document.querySelector('.strawberry-adblock-host');
+        if (host) host.textContent = location.hostname || 'this site';
+        var retry = document.getElementById('strawberry-adblock-retry');
+        if (retry)
+            retry.onclick = function () {
+                location.reload();
+            };
+        var bypass = document.getElementById('strawberry-adblock-bypass');
+        if (bypass)
+            bypass.onclick = function (e) {
+                e.preventDefault();
+                try {
+                    sessionStorage.setItem('strawberry_adblock_bypass', '1');
+                } catch (err) {
+                    /* ignore */
+                }
+                location.reload();
+            };
+    }
+
     window.addEventListener('load', function () {
+        function initStrawberryShell() {
         // Make the homepage logo look like a cutout by removing near-white pixels.
         (function tryTransparentLogoBackground() {
             try {
@@ -848,6 +942,22 @@
             if (!side || !side.classList.contains('is-open')) return;
             if (side.contains(e.target) || (toggle && toggle.contains(e.target))) return;
             lunarToggleSidebar(false);
+        });
+        }
+
+        if (shouldSkipAdblockGate()) {
+            initStrawberryShell();
+            return;
+        }
+        wireAdblockWall();
+        detectAdblock(function (blocked) {
+            if (blocked) {
+                var wall = document.getElementById('strawberry-adblock-wall');
+                if (wall) wall.hidden = false;
+                document.body.classList.add('strawberry-adblock-lock');
+                return;
+            }
+            initStrawberryShell();
         });
     });
 })();

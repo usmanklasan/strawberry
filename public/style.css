@@ -30,6 +30,102 @@ body {
   overflow: hidden;
 }
 
+body.strawberry-adblock-lock {
+  overflow: hidden;
+}
+
+body.strawberry-adblock-lock #lunar-app {
+  pointer-events: none;
+  user-select: none;
+  filter: blur(10px);
+}
+
+.strawberry-adblock-wall {
+  position: fixed;
+  inset: 0;
+  z-index: 2147483000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom))
+    max(20px, env(safe-area-inset-left));
+  box-sizing: border-box;
+  background: rgba(6, 8, 14, 0.88);
+  backdrop-filter: blur(8px);
+}
+
+.strawberry-adblock-wall[hidden] {
+  display: none !important;
+}
+
+.strawberry-adblock-dialog {
+  width: 100%;
+  max-width: 420px;
+  padding: 28px 24px;
+  border-radius: var(--lunar-radius);
+  border: 1px solid var(--lunar-stroke);
+  background: var(--lunar-panel);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.55);
+  text-align: center;
+}
+
+.strawberry-adblock-title {
+  margin: 0 0 12px;
+  font-size: 1.2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.strawberry-adblock-text,
+.strawberry-adblock-hint {
+  margin: 0 0 12px;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--lunar-text);
+  opacity: 0.92;
+}
+
+.strawberry-adblock-hint {
+  font-size: 0.82rem;
+  opacity: 0.85;
+}
+
+.strawberry-adblock-retry {
+  margin-top: 16px;
+  width: 100%;
+  padding: 14px 16px;
+  border-radius: 12px;
+  border: 1px solid rgba(136, 92, 255, 0.55);
+  background: linear-gradient(145deg, rgba(136, 92, 255, 0.4), rgba(92, 194, 255, 0.18));
+  color: var(--lunar-text);
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.strawberry-adblock-retry:hover {
+  filter: brightness(1.06);
+}
+
+.strawberry-adblock-escape {
+  margin: 18px 0 0;
+  font-size: 0.75rem;
+  color: var(--lunar-muted);
+  line-height: 1.4;
+}
+
+.strawberry-adblock-linkish {
+  display: inline;
+  margin: 0;
+  padding: 0;
+  border: none;
+  background: none;
+  color: var(--lunar-accent2);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
 body.lunar-light {
   --lunar-bg0:rgb(240, 242, 248);
   --lunar-bg1:rgb(228, 232, 240);
@@ -184,6 +280,11 @@ body.lunar-light .lunar-urlbar {
   font-size: 1rem;
   cursor: pointer;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0;
 }
 
 .lunar-go:hover {
@@ -209,6 +310,17 @@ body.lunar-light .lunar-urlbar {
   font-size: 1.25rem;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  line-height: 0;
+}
+
+.lunar-icon {
+  display: block;
+  flex-shrink: 0;
+  pointer-events: none;
 }
 
 .lunar-menu-toggle:hover {
