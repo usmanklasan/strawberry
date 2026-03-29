@@ -7,7 +7,7 @@
     <script src="script.js" defer></script>
 
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#0a0a12" />
 
     <title>Strawberry</title>
@@ -43,6 +43,7 @@
         </div>
 
         <main class="lunar-main">
+            <div id="lunar-tabbar" class="lunar-tabbar" aria-label="Tabs" hidden></div>
             <section id="lunar-home" class="lunar-home" aria-label="New tab">
                 <div class="lunar-clock-wrap">
                     <div class="lunar-clock" id="lunar-clock">--:--:--</div>
@@ -71,18 +72,42 @@
                 </nav>
             </section>
 
-            <iframe id="proxy-frame" class="lunar-frame" name="strawberry-proxy" title="Browsing" sandbox="allow-scripts allow-forms allow-popups allow-modals allow-same-origin allow-pointer-lock allow-downloads"></iframe>
+            <div id="lunar-frame-stack" class="lunar-frame-stack">
+            <iframe id="proxy-frame" class="lunar-frame" name="strawberry-proxy" data-strawberry-proxy="1" title="Browsing" sandbox="allow-scripts allow-forms allow-popups allow-modals allow-same-origin allow-pointer-lock allow-downloads"></iframe>
+            </div>
         </main>
 
         <aside class="lunar-sidebar" id="lunar-sidebar" aria-label="Tools">
             <div class="lunar-side-inner">
-                <h2 class="lunar-side-title">Menu</h2>
-                <button type="button" class="lunar-side-btn" id="lunar-action-newtab"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd><span>New tab</span></button>
-                <button type="button" class="lunar-side-btn" id="lunar-action-fullscreen"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd><span>Full screen</span></button>
-                <button type="button" class="lunar-side-btn" id="lunar-action-reload"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd><span>Reload frame</span></button>
-                <button type="button" class="lunar-side-btn" id="lunar-action-dark"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>X</kbd><span>Dark mode</span></button>
-                <button type="button" class="lunar-side-btn" id="lunar-action-cloak" aria-pressed="true"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd><span>AB Cloak (iframe)</span></button>
-                <button type="button" class="lunar-side-btn" id="lunar-action-home"><span>Home / clear</span></button>
+                <div class="lunar-side-head">
+                    <h2 id="lunar-side-heading" class="lunar-side-title">Menu</h2>
+                    <button type="button" class="lunar-sidebar-close" id="lunar-sidebar-close" aria-label="Close menu">×</button>
+                </div>
+                <nav class="lunar-side-nav" aria-labelledby="lunar-side-heading">
+                    <button type="button" class="lunar-side-btn" id="lunar-action-newtab">
+                        <span class="lunar-side-label">New tab</span>
+                        <span class="lunar-side-keys" aria-hidden="true"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>N</kbd></span>
+                    </button>
+                    <button type="button" class="lunar-side-btn" id="lunar-action-fullscreen">
+                        <span class="lunar-side-label">Full screen</span>
+                        <span class="lunar-side-keys" aria-hidden="true"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>Z</kbd></span>
+                    </button>
+                    <button type="button" class="lunar-side-btn" id="lunar-action-reload">
+                        <span class="lunar-side-label">Reload frame</span>
+                        <span class="lunar-side-keys" aria-hidden="true"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>R</kbd></span>
+                    </button>
+                    <button type="button" class="lunar-side-btn lunar-side-btn--toggle" id="lunar-action-dark" aria-pressed="true">
+                        <span class="lunar-side-label">Dark mode</span>
+                        <span class="lunar-side-keys" aria-hidden="true"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>X</kbd></span>
+                    </button>
+                    <button type="button" class="lunar-side-btn lunar-side-btn--toggle" id="lunar-action-cloak" aria-pressed="true">
+                        <span class="lunar-side-label">AB Cloak (iframe)</span>
+                        <span class="lunar-side-keys" aria-hidden="true"><kbd>Ctrl</kbd>+<kbd>Alt</kbd>+<kbd>C</kbd></span>
+                    </button>
+                    <button type="button" class="lunar-side-btn lunar-side-btn--action-only" id="lunar-action-home">
+                        <span class="lunar-side-label">Home / clear</span>
+                    </button>
+                </nav>
             </div>
         </aside>
 

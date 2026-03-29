@@ -9,6 +9,19 @@ UploadStorage.prototype.copy = emptyFunc;
 UploadStorage.prototype.get = emptyFunc;
 UploadStorage.prototype.store = emptyFunc;
 
+// Runs before /rammerhead.js. With allow-same-origin on the shell iframe, sites can navigate window.top / parent
+// and replace the whole tab. Pretend we are the top window when embedded in Strawberry's proxy-frame.
+const STRAWBERRY_IFRAME_LOCK_SCRIPT =
+    '(function(){try{' +
+    "if(window.parent===window||!window.frameElement)return;" +
+    'var fe=window.frameElement;' +
+    "var n=(fe.name||'');var id=(fe.id||'');" +
+    "if(n!=='strawberry-proxy'&&id!=='proxy-frame'&&(!fe.getAttribute||fe.getAttribute('data-strawberry-proxy')!=='1'))return;" +
+    'var W=window;' +
+    "Object.defineProperty(window,'top',{get:function(){return W;},configurable:true});" +
+    "Object.defineProperty(window,'parent',{get:function(){return W;},configurable:true});" +
+    '}catch(e){}})();';
+
 /**
  * wrapper for initializing Session with saving capabilities
  */
@@ -64,6 +77,7 @@ class RammerheadSession extends Session {
             this.disableHttp2();
         }
 
+        this.injectable.scripts.push(STRAWBERRY_IFRAME_LOCK_SCRIPT);
         this.injectable.scripts.push(...prependScripts);
         this.injectable.scripts.push('/rammerhead.js');
 

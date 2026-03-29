@@ -8,6 +8,13 @@
   --lunar-text: rgba(255, 255, 255, 0.94);
   --lunar-muted: rgba(255, 255, 255, 0.45);
   --lunar-radius: 14px;
+  --lunar-footer-h: 40px;
+  --lunar-touch: 48px;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
 }
 
 html,
@@ -62,17 +69,31 @@ a {
 /* ——— Lunar shell ——— */
 .lunar-app {
   height: 100%;
+  max-height: 100%;
   display: flex;
   flex-direction: column;
   position: relative;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+@supports (height: 100dvh) {
+  .lunar-app {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
 }
 
 .lunar-chrome {
+  position: relative;
+  z-index: 300;
   flex-shrink: 0;
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
-  gap: 12px;
+  gap: 10px 12px;
   padding: 10px 14px;
+  padding-top: max(10px, env(safe-area-inset-top, 0px));
   background: var(--lunar-panel);
   border-bottom: 1px solid var(--lunar-stroke);
   backdrop-filter: blur(12px);
@@ -170,16 +191,24 @@ body.lunar-light .lunar-urlbar {
   box-shadow: 0 0 16px rgba(136, 92, 255, 0.35);
 }
 
+.lunar-go,
+.lunar-shortcut {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
 .lunar-menu-toggle {
   flex-shrink: 0;
-  width: 42px;
-  height: 42px;
+  width: var(--lunar-touch);
+  min-width: var(--lunar-touch);
+  height: var(--lunar-touch);
   border-radius: 12px;
   border: 1px solid var(--lunar-stroke);
   background: rgba(0, 0, 0, 0.2);
   color: inherit;
   font-size: 1.25rem;
   cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
 }
 
 .lunar-menu-toggle:hover {
@@ -211,10 +240,82 @@ body.lunar-light .lunar-urlbar {
   flex: 1;
   min-height: 0;
   position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+.lunar-tabbar {
+  display: flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--lunar-stroke);
+  background: rgba(0, 0, 0, 0.28);
+  overflow-x: auto;
+}
+
+.lunar-tabbar[hidden] {
+  display: none !important;
+}
+
+.lunar-tab-wrap {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.lunar-tab {
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--lunar-stroke);
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.lunar-tab.is-active {
+  border-color: rgba(136, 92, 255, 0.55);
+  box-shadow: 0 0 14px rgba(136, 92, 255, 0.2);
+}
+
+.lunar-tab-close {
+  border: none;
+  background: transparent;
+  color: var(--lunar-muted);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.lunar-tab-close:hover {
+  color: inherit;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.lunar-frame-stack {
+  flex: 1;
+  min-height: 0;
+  position: relative;
+}
+
+.lunar-frame-stack .lunar-frame {
+  position: absolute;
+  inset: 0;
 }
 
 .lunar-home {
-  height: 100%;
+  flex: 1;
+  min-height: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -307,15 +408,27 @@ body.lunar-light .lunar-shortcut {
   position: fixed;
   top: 0;
   right: 0;
-  width: min(300px, 88vw);
+  width: min(320px, calc(100vw - 16px));
   height: 100%;
+  max-height: 100%;
   background: var(--lunar-panel);
   border-left: 1px solid var(--lunar-stroke);
   transform: translateX(100%);
-  transition: transform 0.22s ease;
+  transition: transform 0.24s cubic-bezier(0.32, 0.72, 0, 1);
   z-index: 200;
   backdrop-filter: blur(14px);
   box-shadow: -12px 0 40px rgba(0, 0, 0, 0.35);
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-sizing: border-box;
+}
+
+@supports (height: 100dvh) {
+  .lunar-sidebar {
+    height: 100dvh;
+    max-height: 100dvh;
+  }
 }
 
 .lunar-sidebar.is-open {
@@ -323,64 +436,245 @@ body.lunar-light .lunar-shortcut {
 }
 
 .lunar-side-inner {
-  padding: 72px 20px 24px;
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 12px 16px;
+  padding-top: max(12px, env(safe-area-inset-top, 0px));
+  padding-bottom: max(16px, env(safe-area-inset-bottom, 0px));
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.lunar-side-head {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--lunar-stroke);
+}
+
+.lunar-side-head .lunar-side-title {
+  margin: 0;
+}
+
+.lunar-sidebar-close {
+  flex-shrink: 0;
+  width: var(--lunar-touch);
+  min-width: var(--lunar-touch);
+  height: var(--lunar-touch);
+  border-radius: 12px;
+  border: 1px solid var(--lunar-stroke);
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+  font-size: 1.35rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lunar-sidebar-close:hover {
+  border-color: rgba(136, 92, 255, 0.5);
+  background: rgba(136, 92, 255, 0.12);
+}
+
+body.lunar-light .lunar-sidebar-close {
+  background: rgba(255, 255, 255, 0.55);
 }
 
 .lunar-side-title {
-  margin: 0 0 16px;
-  font-size: 0.85rem;
+  margin: 0;
+  font-size: 0.78rem;
   text-transform: uppercase;
-  letter-spacing: 0.12em;
+  letter-spacing: 0.14em;
   color: var(--lunar-muted);
+  font-weight: 600;
+}
+
+.lunar-side-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-bottom: 8px;
 }
 
 .lunar-side-btn {
   display: flex;
-  flex-direction: row-reverse;
+  flex-direction: row;
   align-items: center;
   justify-content: space-between;
+  gap: 14px;
   width: 100%;
-  gap: 12px;
-  margin-bottom: 10px;
-  padding: 12px 14px;
+  margin: 0;
+  padding: 13px 14px;
+  min-height: var(--lunar-touch);
+  box-sizing: border-box;
   border-radius: 12px;
   border: 1px solid var(--lunar-stroke);
-  background: rgba(0, 0, 0, 0.15);
+  background: rgba(0, 0, 0, 0.12);
   color: inherit;
   cursor: pointer;
+  font-size: 0.9rem;
+  text-align: left;
+  flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease,
+    box-shadow 0.15s ease;
+}
+
+.lunar-side-btn--action-only {
+  justify-content: center;
+}
+
+.lunar-side-label {
+  flex: 1;
+  min-width: 0;
+  text-align: left;
+  font-weight: 500;
+  line-height: 1.25;
+}
+
+.lunar-side-btn--action-only .lunar-side-label {
+  flex: none;
+  text-align: center;
+}
+
+.lunar-side-keys {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  letter-spacing: 0.02em;
+  opacity: 0.5;
+  white-space: nowrap;
   text-align: right;
-  font-size: 0.88rem;
+}
+
+.lunar-side-keys kbd {
+  font-size: inherit;
+  font-family: ui-monospace, monospace;
+  opacity: 1;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: inherit;
 }
 
 body.lunar-light .lunar-side-btn {
-  background: rgba(255, 255, 255, 0.6);
+  background: rgba(255, 255, 255, 0.72);
 }
 
 .lunar-side-btn:hover {
-  border-color: rgba(136, 92, 255, 0.45);
+  border-color: rgba(136, 92, 255, 0.4);
 }
 
-.lunar-side-btn kbd {
-  font-size: 0.65rem;
-  opacity: 0.55;
-  font-family: inherit;
+/* Toggle items (theme, cloak): isolated row, no visual collision */
+.lunar-side-btn--toggle {
+  position: relative;
 }
 
-.lunar-side-btn span:last-child {
-  flex: 1;
-  text-align: left;
+.lunar-side-btn--toggle[aria-pressed='true'] {
+  border: 1px solid rgba(136, 92, 255, 0.85);
+  background: rgba(136, 92, 255, 0.2);
+  box-shadow:
+    inset 0 0 0 1px rgba(136, 92, 255, 0.12),
+    0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+body.lunar-light .lunar-side-btn--toggle[aria-pressed='true'] {
+  background: rgba(136, 92, 255, 0.14);
+  border-color: rgba(106, 72, 220, 0.6);
+}
+
+.lunar-side-btn--toggle[aria-pressed='false'] {
+  border-color: var(--lunar-stroke);
+  background: rgba(0, 0, 0, 0.08);
+  opacity: 1;
+  box-shadow: none;
+}
+
+body.lunar-light .lunar-side-btn--toggle[aria-pressed='false'] {
+  background: rgba(255, 255, 255, 0.55);
+}
+
+.lunar-side-btn--toggle[aria-pressed='true'] .lunar-side-label::after {
+  content: ' · On';
+  font-size: 0.82em;
+  font-weight: 700;
+  color: var(--lunar-accent2);
+}
+
+.lunar-side-btn--toggle[aria-pressed='false'] .lunar-side-label::after {
+  content: ' · Off';
+  font-size: 0.82em;
+  font-weight: 600;
+  color: var(--lunar-muted);
 }
 
 .lunar-footer {
+  position: relative;
+  z-index: 280;
   flex-shrink: 0;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
+  min-height: var(--lunar-footer-h);
   padding: 8px 16px;
+  padding-bottom: max(8px, env(safe-area-inset-bottom, 0px));
   font-size: 0.72rem;
   color: var(--lunar-muted);
   border-top: 1px solid var(--lunar-stroke);
-  background: rgba(0, 0, 0, 0.2);
+  background: rgba(0, 0, 0, 0.28);
+}
+
+body.lunar-light .lunar-footer {
+  background: rgba(255, 255, 255, 0.85);
+}
+
+.lunar-footer-left,
+.lunar-footer-right {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+/* Tablet / small desktop: stack url bar for breathing room */
+@media (max-width: 860px) {
+  .lunar-chrome {
+    flex-wrap: wrap;
+  }
+
+  .lunar-brand {
+    order: 1;
+  }
+
+  .lunar-menu-toggle {
+    order: 2;
+    margin-left: auto;
+  }
+
+  .lunar-urlbar-wrap {
+    order: 3;
+    flex: 1 1 100%;
+    width: 100%;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 640px) {
@@ -390,5 +684,58 @@ body.lunar-light .lunar-side-btn {
 
   .lunar-path-hint {
     display: none;
+  }
+
+  .lunar-chrome {
+    padding-left: max(10px, env(safe-area-inset-left, 0px));
+    padding-right: max(10px, env(safe-area-inset-right, 0px));
+  }
+
+  .lunar-scheme {
+    display: none;
+  }
+
+  .lunar-url-input {
+    font-size: 16px;
+  }
+
+  /* Prevent iOS zoom on focus; keeps tap targets usable */
+
+  .lunar-footer {
+    padding-left: max(12px, env(safe-area-inset-left, 0px));
+    padding-right: max(12px, env(safe-area-inset-right, 0px));
+  }
+
+  .lunar-shortcuts {
+    gap: 10px;
+    max-width: 100%;
+  }
+
+  .lunar-shortcut {
+    width: 44%;
+    max-width: 120px;
+    min-width: 0;
+  }
+
+  .lunar-tabbar {
+    padding-left: max(8px, env(safe-area-inset-left, 0px));
+  }
+}
+
+/* Phone drawer: full-width sheet, clearer separation */
+@media (max-width: 480px) {
+  .lunar-sidebar {
+    width: 100%;
+    max-width: 100%;
+    border-left: none;
+  }
+
+  .lunar-side-keys {
+    display: none;
+  }
+
+  .lunar-side-btn {
+    padding: 14px 16px;
+    min-height: 52px;
   }
 }

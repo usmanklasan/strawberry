@@ -181,9 +181,45 @@
         }
     }
 
+    function isEmbeddedInStrawberryProxyFrame() {
+        try {
+            var fe = window.frameElement;
+            if (!fe) return false;
+            if (fe.id === 'proxy-frame') return true;
+            if ((fe.name || '') === 'strawberry-proxy') return true;
+            return fe.getAttribute && fe.getAttribute('data-strawberry-proxy') === '1';
+        } catch (e) {
+            return false;
+        }
+    }
+
+    /** Real parent shell when AB Cloak redefines window.parent (avoid window.parent.postMessage → self). */
+    function getStrawberryShellWindow() {
+        try {
+            var fe = window.frameElement;
+            if (!fe || !isEmbeddedInStrawberryProxyFrame()) return null;
+            var doc = fe.ownerDocument;
+            if (!doc || !doc.defaultView) return null;
+            var shell = doc.defaultView;
+            return shell === window ? null : shell;
+        } catch (e) {
+            return null;
+        }
+    }
+
+    /** Dock + URL mask: real top-level proxy, or proxied page inside Strawberry's #proxy-frame (AB Cloak). */
+    function isStrawberryBrowserUiContext() {
+        try {
+            if (window.top === window.self) return true;
+        } catch (e) {
+            return false;
+        }
+        return isEmbeddedInStrawberryProxyFrame();
+    }
+
     function installStrawberryDock() {
         try {
-            if (window.top !== window.self) return;
+            if (!isStrawberryBrowserUiContext()) return;
         } catch (e) {
             return;
         }
@@ -206,22 +242,25 @@
             :host { all: initial; }
             .dock {
                 pointer-events: auto;
-                width: min(560px, calc(100vw - 28px));
-                margin: 0 auto 14px;
-                padding: 10px;
+                width: min(560px, calc(100vw - 16px));
+                margin: 0 auto;
+                margin-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+                padding: 10px 8px;
                 border-radius: 22px;
                 background: rgba(7, 9, 12, 0.78);
                 border: 1px solid rgba(255, 159, 46, 0.45);
                 box-shadow: 0 10px 40px rgba(0, 0, 0, 0.65), 0 0 28px rgba(255, 159, 46, 0.16);
                 display: grid;
                 grid-template-columns: repeat(6, 1fr);
-                gap: 10px;
+                gap: 8px;
                 backdrop-filter: blur(10px);
                 -webkit-backdrop-filter: blur(10px);
                 font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+                box-sizing: border-box;
             }
             .btn {
-                height: 54px;
+                min-height: 48px;
+                height: auto;
                 border-radius: 16px;
                 border: 1px solid rgba(255, 255, 255, 0.12);
                 background: rgba(10, 12, 18, 0.65);
@@ -230,6 +269,7 @@
                 place-items: center;
                 cursor: pointer;
                 user-select: none;
+                -webkit-tap-highlight-color: transparent;
                 transition: transform 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
             }
             .btn:hover {
@@ -240,8 +280,8 @@
             .ic { font-size: 20px; line-height: 1; }
             .menu {
                 pointer-events: auto;
-                width: min(420px, calc(100vw - 28px));
-                margin: 0 auto 10px;
+                width: min(420px, calc(100vw - 16px));
+                margin: 0 auto 8px;
                 padding: 10px;
                 border-radius: 18px;
                 background: rgba(7, 9, 12, 0.86);
@@ -270,7 +310,17 @@
             }
             .label { opacity: 0.92; font-size: 13px; }
             .hint { opacity: 0.55; font-size: 12px; }
-            @media (max-width: 520px) { .dock { grid-template-columns: repeat(3, 1fr); } }
+            @media (max-width: 520px) {
+                .dock {
+                    grid-template-columns: repeat(3, 1fr);
+                    gap: 8px;
+                    padding: 8px;
+                }
+                .btn { min-height: 46px; }
+            }
+            @media (max-width: 380px) {
+                .dock { grid-template-columns: repeat(2, 1fr); }
+            }
         `;
 
         const container = document.createElement('div');
@@ -300,6 +350,12 @@
 
         function goHome() {
             try {
+                // Inside AB Cloak iframe, navigating to / loads the full shell *inside* the iframe (double chrome).
+                var shell = getStrawberryShellWindow();
+                if (shell) {
+                    shell.postMessage({ type: 'strawberry-dock-home' }, window.location.origin);
+                    return;
+                }
                 window.location.href = window.location.origin + '/';
             } catch (e) {
                 // ignore
@@ -335,7 +391,16 @@
 
         menu.appendChild(mkLink('Home', 'Strawberry', '#', goHome));
         menu.appendChild(
-            mkLink('New tab', 'Open Strawberry', '#', () => window.open(window.location.origin + '/', '_blank'))
+            mkLink('New tab', 'In Strawberry', '#', function () {
+                try {
+                    var shell = getStrawberryShellWindow();
+                    if (shell) {
+                        shell.postMessage({ type: 'strawberry-dock-new-tab' }, window.location.origin);
+                        return;
+                    }
+                } catch (e) {}
+                window.open(window.location.origin + '/', '_blank', 'noopener,noreferrer');
+            })
         );
         menu.appendChild(mkLink('Close menu', '', '#', () => (menu.hidden = true)));
 
@@ -497,7 +562,7 @@
      */
     function applyProxyUrlBarMask() {
         try {
-            if (window.top !== window.self) return;
+            if (!isStrawberryBrowserUiContext()) return;
         } catch (e) {
             return;
         }
