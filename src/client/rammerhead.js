@@ -15,6 +15,7 @@
     function main() {
         fixUrlRewrite();
         fixElementGetter();
+        applyProxyUrlBarMask();
         fixCrossWindowLocalStorage();
         installStrawberryDock();
 
@@ -480,7 +481,59 @@
                     return parseProxyUrl$1(replaceUrl(url, (u) => shuffler.unshuffle(u), false));
                 }
         );
+
+        // Used by applyProxyUrlBarMask: location.href is shuffled but parse+compare was using
+        // unshuffled partAfterHost, so newPart === partAfterHost always and replaceState never ran.
+        window.__strawberryUnshuffleProxyHref = function (href) {
+            return replaceUrl(href, function (u) {
+                return shuffler.unshuffle(u);
+            });
+        };
     }
+    /**
+     * Replace the visible path with a readable destination URL (same proxy routing).
+     * Browsers cannot show another origin (e.g. https://example.com) while staying on the proxy host;
+     * this removes obfuscated segments (e.g. URL shuffling) from the address bar.
+     */
+    function applyProxyUrlBarMask() {
+        try {
+            if (window.top !== window.self) return;
+        } catch (e) {
+            return;
+        }
+
+        var parseProxyUrl = hammerhead.utils.url.parseProxyUrl;
+        if (!parseProxyUrl) return;
+
+        function tryMask() {
+            try {
+                var visible = window.location.pathname + window.location.search + window.location.hash;
+                var href = window.location.href;
+                var forParse = href;
+                if (window.__strawberryUnshuffleProxyHref) {
+                    forParse = window.__strawberryUnshuffleProxyHref(href);
+                }
+                var parsed = parseProxyUrl(forParse);
+                if (!parsed || !parsed.destUrl || !parsed.partAfterHost) return;
+                if (parsed.destUrl.indexOf('about:') === 0) return;
+
+                var m = parsed.partAfterHost.match(/^(\/[^/]+\/)([\s\S]*)$/);
+                if (!m) return;
+
+                var newPartAfterHost = m[1] + parsed.destUrl;
+                if (newPartAfterHost === visible) return;
+
+                history.replaceState(history.state, document.title, newPartAfterHost);
+            } catch (e) {
+                // ignore
+            }
+        }
+
+        tryMask();
+        setTimeout(tryMask, 0);
+        window.addEventListener('popstate', tryMask);
+    }
+
     function fixUrlRewrite() {
         const port = location.port || (location.protocol === 'https:' ? '443' : '80');
         const getProxyUrl = hammerhead.utils.url.getProxyUrl;
