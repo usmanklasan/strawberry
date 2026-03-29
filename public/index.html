@@ -50,7 +50,9 @@
                     <div class="lunar-tagline">Strawberry</div>
                 </div>
 
-                <nav class="lunar-shortcuts" aria-label="Shortcuts">
+                <div class="lunar-quicklinks-block">
+                    <h2 class="lunar-quick-heading">Quick links</h2>
+                    <nav class="lunar-shortcuts" aria-label="Quick links">
                     <button type="button" class="lunar-shortcut" data-quick-url="https://www.youtube.com/" title="YouTube">
                         <span class="lunar-sic">▶</span><span class="lunar-slabel">YouTube</span>
                     </button>
@@ -69,7 +71,21 @@
                     <button type="button" class="lunar-shortcut" data-quick-url="https://duckduckgo.com/" title="DuckDuckGo">
                         <span class="lunar-sic">🦆</span><span class="lunar-slabel">DuckDuckGo</span>
                     </button>
-                </nav>
+                    </nav>
+                    <div class="lunar-home-ad-leaderboard" aria-label="Advertisement">
+                        <div id="strawberry-leaderboard-slot" class="strawberry-leaderboard-frame"></div>
+                        <script>
+                            atOptions = {
+                                key: 'cdb89e040a7a3bdc884365314445d379',
+                                format: 'iframe',
+                                height: 90,
+                                width: 728,
+                                params: {}
+                            };
+                        </script>
+                        <script src="https://establishscarcely.com/cdb89e040a7a3bdc884365314445d379/invoke.js"></script>
+                    </div>
+                </div>
             </section>
 
             <div id="lunar-frame-stack" class="lunar-frame-stack">
@@ -116,6 +132,60 @@
             <span class="lunar-footer-right">v2.0.0 · Strawberry</span>
         </footer>
     </div>
+
+    <div class="strawberry-ad-sky strawberry-ad-sky--left" id="strawberry-sky-left" aria-hidden="true">
+        <div class="strawberry-ad-sky-inner" id="strawberry-sky-left-slot"></div>
+    </div>
+    <div class="strawberry-ad-sky strawberry-ad-sky--right" id="strawberry-sky-right" aria-hidden="true">
+        <div class="strawberry-ad-sky-inner" id="strawberry-sky-right-mirror"></div>
+    </div>
+
+    <script>
+        (function () {
+            var SKY_LEFT = 'strawberry-sky-left-slot';
+            var SKY_RIGHT = 'strawberry-sky-right-mirror';
+            function injectInvoke(container, opts, src, onload) {
+                var el = document.getElementById(container);
+                if (!el) return;
+                window.atOptions = opts;
+                var s = document.createElement('script');
+                s.async = true;
+                s.src = src;
+                if (onload) s.onload = onload;
+                el.appendChild(s);
+            }
+            function loadSkySecond() {
+                injectInvoke(
+                    SKY_RIGHT,
+                    { key: 'bb2ce733dca3e1dd6882409b2b5b25d0', format: 'iframe', height: 600, width: 160, params: {} },
+                    'https://establishscarcely.com/bb2ce733dca3e1dd6882409b2b5b25d0/invoke.js'
+                );
+            }
+            function loadSkyFirst() {
+                injectInvoke(
+                    SKY_LEFT,
+                    { key: 'bb2ce733dca3e1dd6882409b2b5b25d0', format: 'iframe', height: 600, width: 160, params: {} },
+                    'https://establishscarcely.com/bb2ce733dca3e1dd6882409b2b5b25d0/invoke.js',
+                    loadSkySecond
+                );
+            }
+            function shouldLoadSkyscrapers() {
+                try {
+ return window.matchMedia('(min-width: 1280px)').matches;
+} catch (e) {
+ return window.innerWidth >= 1280;
+}
+            }
+            function bootAds() {
+                if (shouldLoadSkyscrapers()) loadSkyFirst();
+            }
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', bootAds);
+            } else {
+                bootAds();
+            }
+        })();
+    </script>
 
     <!-- Legacy IDs for script.js -->
     <section class="legacy" aria-hidden="true">

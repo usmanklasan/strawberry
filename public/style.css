@@ -308,13 +308,26 @@ body.lunar-light .lunar-urlbar {
   position: relative;
 }
 
+/* On the start page, collapse the frame stack so it does not share height 50/50 with #lunar-home
+   (that was clipping Quick links + banner). When browsing, #lunar-home has .is-hidden and this rule does not apply. */
+#lunar-home:not(.is-hidden) ~ #lunar-frame-stack {
+  flex: 0 0 0;
+  max-height: 0;
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .lunar-frame-stack .lunar-frame {
   position: absolute;
   inset: 0;
 }
 
 .lunar-home {
-  flex: 1;
+  flex: 1 1 auto;
   min-height: 0;
   display: flex;
   flex-direction: column;
@@ -322,7 +335,133 @@ body.lunar-light .lunar-urlbar {
   justify-content: center;
   gap: 2.5rem;
   padding: 24px;
+  padding-bottom: max(32px, env(safe-area-inset-bottom, 0px));
   box-sizing: border-box;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Homepage: quick links + leaderboard ad block */
+.lunar-quicklinks-block {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  width: 100%;
+  max-width: 728px;
+}
+
+.lunar-quick-heading {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--lunar-muted);
+}
+
+.lunar-home .lunar-shortcuts {
+  margin: 0;
+}
+
+.lunar-home-ad-leaderboard {
+  width: 100%;
+  max-width: 728px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0;
+  margin-top: 0.75rem;
+  padding: 12px 0 8px;
+  box-sizing: border-box;
+}
+
+.strawberry-leaderboard-frame {
+  width: 100%;
+  max-width: 728px;
+  min-width: 0;
+  min-height: 90px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: auto;
+  overflow-y: visible;
+  -webkit-overflow-scrolling: touch;
+}
+
+.strawberry-leaderboard-frame iframe {
+  display: block;
+  max-width: 100%;
+  border: none;
+}
+
+/* Adsterra skyscrapers: fixed L/R, centered vertically; hidden on smaller viewports */
+.strawberry-ad-sky {
+  display: none;
+  position: fixed;
+  top: 50%;
+  transform: translateY(-50%);
+  z-index: 35;
+  pointer-events: auto;
+  box-sizing: border-box;
+}
+
+.strawberry-ad-sky--left {
+  left: max(12px, env(safe-area-inset-left, 0px));
+}
+
+.strawberry-ad-sky--right {
+  right: max(12px, env(safe-area-inset-right, 0px));
+}
+
+.strawberry-ad-sky-inner {
+  width: 160px;
+  height: 600px;
+  max-width: 160px;
+  max-height: 600px;
+  overflow: hidden;
+  border-radius: var(--lunar-radius);
+  border: 1px solid var(--lunar-stroke);
+  background: rgba(0, 0, 0, 0.12);
+  box-sizing: border-box;
+}
+
+body.lunar-light .strawberry-ad-sky-inner {
+  background: rgba(255, 255, 255, 0.5);
+}
+
+@media (min-width: 1280px) {
+  .strawberry-ad-sky {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Reserve horizontal space so shell content does not sit under fixed skyscrapers */
+  body:has(#lunar-home:not(.is-hidden)) .lunar-app {
+    padding-left: calc(160px + max(12px, env(safe-area-inset-left, 0px)) + 24px);
+    padding-right: calc(160px + max(12px, env(safe-area-inset-right, 0px)) + 24px);
+    box-sizing: border-box;
+  }
+}
+
+/* Hide sky ads on tablet/mobile; gutters only apply at 1280px+ via rules above */
+@media (max-width: 1279px) {
+  .strawberry-ad-sky {
+    display: none !important;
+  }
+}
+
+body:has(#lunar-home.is-hidden) .strawberry-ad-sky {
+  display: none !important;
+}
+
+body:has(#lunar-home.is-hidden) .lunar-app {
+  padding-left: 0;
+  padding-right: 0;
 }
 
 .lunar-home.is-hidden {
